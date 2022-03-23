@@ -35,6 +35,7 @@ We plan to use ghc server with Nvidia GPU and CUDA environment. We will start fr
 
 ## PLATFORM CHOICE
 Language: C++
+
 Platform: GHC machine with NVIDIA RTX 2080 GPU. (Our rendering system runs on single machine and normally requires no more than 8GB GPU memory.)
 
 ## SCHEDULE

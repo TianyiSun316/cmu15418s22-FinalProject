@@ -46,3 +46,15 @@ Platform: GHC machine with NVIDIA RTX 2080 GPU. (Our rendering system runs on si
 - 4.17 Support real-time rendering
 - 4.25 Optimize our algorithm and hopefully achieve fps requirements.
 - 4.29 Finish detailed performance analysis and assignment report.
+
+
+## Milestone
+In the past few weeks, we made progress in the following directions:
+- Study the theoretical knowledge of ray tracing and optical physics.
+- Find reference sequential implementation and test its performance on GHC machine.
+- Implement the CUDA version of the static ray tracing algorithm and conduct experiments to evaluate its performance and speedup.
+- Exploring more optimization techniques on accelerating GPU ray tracing.
+
+We believe we can accomplish our goals. Since we found aboundant information on this topic, and got preliminary results on cuda static ray tracing. The next steps will be how to speedup the ray tracer to support real-time rendering. We have found some potential optimization opportunities(e.g. use shared memory, KD-tree traversal) to achieve our performance goal.
+
+In our poster session, we will have both a real-time ray tracing demo and performance analysis graphs. Idealy, we will impelment an interactive ray tracer which users can design a scene and assign textures to objects by themselves. 

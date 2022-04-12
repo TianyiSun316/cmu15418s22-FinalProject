@@ -55,7 +55,12 @@ In the past few weeks, we made progress in the following directions:
 - Implement the CUDA version of the static ray tracing algorithm and conduct experiments to evaluate its performance and speedup.
 - Exploring more optimization techniques on accelerating GPU ray tracing.
 
-We believe we can accomplish our goals. Since we found aboundant information on this topic, and got preliminary results on cuda static ray tracing. The next steps will be how to speedup the ray tracer to support real-time rendering. We have found some potential optimization opportunities(e.g. use shared memory, KD-tree traversal) to achieve our performance goal.
+We believe we can accomplish our goals. Since we found aboundant information on this topic, and got preliminary results on cuda static ray tracing. The next steps will be how to speedup the ray tracer to support real-time rendering. We have found some potential optimization opportunities to achieve our performance goal:
+- **Replacing recursion with iterative loop.** This can avoid the complexity of the recursive stack during ray tracing, which can cause unnecessary pressure on registers and local memory
+- **Using shared memory to cache surface data.** If an object is intersected with multiple rays, the surface data of the object will be requested multiple times by each ray. Using shared memory can avoid the cost of fetching a large amount of data from global memory.
+- **Quantization.** As the speed of GPU units is highly influenced by the precision of the operands, we will try to accelerate the speed by using single-precision float point.
+- **Intersection Optimization.** Using spatial partitioning data structures include BSP trees, quadtrees, octrees, and k-D trees to reduce the number of surfaces that we need to check for each ray.
+- **Minimize data movement cost.** The image data can be compressed to 8-bit components before sending it back to the host memory. This can minimize the amount of data being moved between the GPU and the host.
 
 In our poster session, we will have both a real-time ray tracing demo and performance analysis graphs. Idealy, we will impelment an interactive ray tracer which users can design a scene and assign textures to objects by themselves. 
 

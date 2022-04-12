@@ -64,12 +64,12 @@ Sequential, Static CPU version:
 
 Platform: 2.6 GHz 6-Core Intel Core i7, 16 GB 2400 MHz DDR4, MAC OSX
 
-| num objects      | Time(s) |
-| ----------- | ----------- |
-| 576      | 400.1       |
-| 220   | 175.2        |
-| 100   | 83.8        |
-| 10   | 17.0        |
+| num of objects      | Sequential Time(s) | GPU Time(s)|
+| ----------- | ----------- | ----------- |
+| 576      | 400.1       | 3.13 |
+| 220   | 175.2        | - |
+| 100   | 83.8        | - |
+| 10   | 17.0        | - |
 
 ### Concerns
 - Consider current static sequential Ray tracer takes 400s to render a 960P image. We are not sure if we can optimize the cuda rendering version that support 30FPS realtime rendering. 

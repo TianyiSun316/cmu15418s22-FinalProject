@@ -58,3 +58,20 @@ In the past few weeks, we made progress in the following directions:
 We believe we can accomplish our goals. Since we found aboundant information on this topic, and got preliminary results on cuda static ray tracing. The next steps will be how to speedup the ray tracer to support real-time rendering. We have found some potential optimization opportunities(e.g. use shared memory, KD-tree traversal) to achieve our performance goal.
 
 In our poster session, we will have both a real-time ray tracing demo and performance analysis graphs. Idealy, we will impelment an interactive ray tracer which users can design a scene and assign textures to objects by themselves. 
+
+### Preliminary Results
+Sequential, Static CPU version:
+
+Platform: 2.6 GHz 6-Core Intel Core i7, 16 GB 2400 MHz DDR4, MAC OSX
+
+| num objects      | Time(s) |
+| ----------- | ----------- |
+| 576      | 400.1       |
+| 220   | 175.2        |
+| 100   | 83.8        |
+| 10   | 17.0        |
+
+### Concerns
+- Consider current static sequential Ray tracer takes 400s to render a 960P image. We are not sure if we can optimize the cuda rendering version that support 30FPS realtime rendering. 
+- Not sure about the workload and time to build an interactive interface.
+- Still have to investigate collision detection and reflection algorithm on other 3D shapes other than sphere.

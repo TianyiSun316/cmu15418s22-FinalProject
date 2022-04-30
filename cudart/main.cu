@@ -91,6 +91,35 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam, hit
     fb[pixel_index] = col;
 }
 
+__global__ void render_sample(vec3 *fb, int max_x, int max_y, int ns, camera **cam, hitable **world, curandState *rand_state) {
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int s = blockIdx.z;
+    if((i >= max_x) || (j >= max_y)) return;
+    int pixel_index = j*max_x + i;
+    curandState local_rand_state = rand_state[pixel_index];
+    float u = float(i + curand_uniform(&local_rand_state)) / float(max_x);
+    float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
+    ray r = (*cam)->get_ray(u, v, &local_rand_state);
+    fb[pixel_index * ns + s] = color(r, world, &local_rand_state);
+}
+
+__global__ void merge_fb(vec3 *fb_sample, vec3 *fb, int max_x, int max_y, int ns) {
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    if((i >= max_x) || (j >= max_y)) return;
+    int pixel_index = j*max_x + i;
+    vec3 col(0,0,0);
+    for (int s = 0; s < ns; s++) {
+        col += fb_sample[pixel_index * ns + s];
+    }
+    col /= float(ns);
+    col[0] = sqrt(col[0]);
+    col[1] = sqrt(col[1]);
+    col[2] = sqrt(col[2]);
+    fb[pixel_index] = col;
+}
+
 #define RND (curand_uniform(&local_rand_state))
 
 __global__ void create_world(hitable **d_list, hitable **d_world, camera **d_camera, int nx, int ny, curandState *rand_state) {
@@ -157,10 +186,13 @@ int main() {
 
     int num_pixels = nx*ny;
     size_t fb_size = num_pixels*sizeof(vec3);
+    size_t fb_sample_size = ns * num_pixels*sizeof(vec3);
 
     // allocate FB
     vec3 *fb;
     checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
+    vec3 *fb_sample;
+    checkCudaErrors(cudaMallocManaged((void **)&fb_sample, fb_sample_size));
 
     // allocate random state
     curandState *d_rand_state;
@@ -189,16 +221,27 @@ int main() {
     start = clock();
     // Render our buffer
     dim3 blocks(nx/tx+1,ny/ty+1);
+    dim3 blocks_sample(nx/tx+1,ny/ty+1, ns);
     dim3 threads(tx,ty);
     render_init<<<blocks, threads>>>(nx, ny, d_rand_state);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
-    render<<<blocks, threads>>>(fb, nx, ny,  ns, d_camera, d_world, d_rand_state);
+    stop = clock();
+    double timer_seconds_0 = ((double)(stop - start)) / (CLOCKS_PER_SEC / 1000);
+    std::cerr << "init took " << timer_seconds_0 << " ms.\n";
+
+    // render<<<blocks, threads>>>(fb, nx, ny,  ns, d_camera, d_world, d_rand_state);
+    render_sample<<<blocks_sample, threads>>>(fb_sample, nx, ny, ns, d_camera, d_world, d_rand_state);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
+
+    merge_fb<<<blocks, threads>>>(fb_sample, fb, nx, ny, ns);
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaDeviceSynchronize());
+
     stop = clock();
-    double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
-    std::cerr << "took " << timer_seconds << " seconds.\n";
+    double timer_seconds = ((double)(stop - start)) / (CLOCKS_PER_SEC / 1000);
+    std::cerr << "render took " << timer_seconds << " ms.\n";
 
     // Output FB as Image
     // std::cout << "P3\n" << nx << " " << ny << "\n255\n";

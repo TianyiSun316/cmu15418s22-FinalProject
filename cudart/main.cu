@@ -94,7 +94,9 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam, hit
 __global__ void render_sample(vec3 *fb, int max_x, int max_y, int ns, camera **cam, hitable **world, curandState *rand_state) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
-    int s = blockIdx.z;
+    int s = threadIdx.z;
+    // __shared__ hitable worldshared;
+    // extern __shared__ hitable list[];
     if((i >= max_x) || (j >= max_y)) return;
     int pixel_index = j*max_x + i;
     curandState local_rand_state = rand_state[pixel_index];
@@ -223,6 +225,7 @@ int main() {
     dim3 blocks(nx/tx+1,ny/ty+1);
     dim3 blocks_sample(nx/tx+1,ny/ty+1, ns);
     dim3 threads(tx,ty);
+    dim3 threads_sample(tx,ty,ns);
     render_init<<<blocks, threads>>>(nx, ny, d_rand_state);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
@@ -231,7 +234,7 @@ int main() {
     std::cerr << "init took " << timer_seconds_0 << " ms.\n";
 
     // render<<<blocks, threads>>>(fb, nx, ny,  ns, d_camera, d_world, d_rand_state);
-    render_sample<<<blocks_sample, threads>>>(fb_sample, nx, ny, ns, d_camera, d_world, d_rand_state);
+    render_sample<<<blocks, threads_sample>>>(fb_sample, nx, ny, ns, d_camera, d_world, d_rand_state);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
 

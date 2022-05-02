@@ -26,6 +26,7 @@ __device__ bool refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& re
 }
 
 #define RANDVEC3 vec3(curand_uniform(local_rand_state),curand_uniform(local_rand_state),curand_uniform(local_rand_state))
+// #define RANDVEC3 vec3(0.1, 0.1, 0.1)
 
 __device__ vec3 random_in_unit_sphere(curandState *local_rand_state) {
     vec3 p;
@@ -101,6 +102,7 @@ public:
         else
             reflect_prob = 1.0f;
         if (curand_uniform(local_rand_state) < reflect_prob)
+        // if (0.2 < reflect_prob)
             scattered = ray(rec.p, reflected);
         else
             scattered = ray(rec.p, refracted);

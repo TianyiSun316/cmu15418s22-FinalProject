@@ -1,13 +1,10 @@
-NVCC           = nvcc -ccbin /usr/bin/gcc
-
-# select one of these for Debug vs. Release
-#NVCC_DBG       = -g -G
-NVCC_DBG       =
+NVCC           = nvcc -ccbin /usr/bin/gcc -std=c++11
+# NVCC           = nvcc -ccbin /usr/bin/gcc -std=c++11 -g -G
 
 NVCCFLAGS      = -O3 -m64 --gpu-architecture compute_61
 
 SRCS = main.cu
-INCS = vec3.h ray.h hitable.h hitable_list.h sphere.h camera.h material.h
+INCS = vec3.h ray.h hitable.h hitable_list.h sphere.h camera.h material.h bbox.h bvh.h
 
 cudart: cudart.o
 	$(NVCC) $(NVCCFLAGS) -o cudart cudart.o

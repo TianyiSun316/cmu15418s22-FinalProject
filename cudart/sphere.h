@@ -2,15 +2,22 @@
 #define SPHEREH
 
 #include "hitable.h"
+#include "bbox.h"
 
 class sphere: public hitable  {
     public:
         __device__ sphere() {}
-        __device__ sphere(vec3 cen, float r, material *m) : center(cen), radius(r), mat_ptr(m)  {};
+        __device__ sphere(vec3 cen, float r, material *m) : center(cen), radius(r), mat_ptr(m)  {
+            bbox = aabb(
+                center - vec3(radius, radius, radius),
+                center + vec3(radius, radius, radius));
+        };
         __device__ virtual bool hit(const ray& r, float tmin, float tmax, hit_record& rec) const;
+        __device__ virtual bool bounding_box(aabb& output_box) const override;
         vec3 center;
         float radius;
         material *mat_ptr;
+        aabb bbox;
 };
 
 __device__ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
@@ -40,5 +47,11 @@ __device__ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& 
     return false;
 }
 
+__device__ bool sphere::bounding_box(aabb& output_box) const {
+    output_box = aabb(
+                center - vec3(radius, radius, radius),
+                center + vec3(radius, radius, radius));
+    return true;
+}
 
 #endif

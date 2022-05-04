@@ -1,53 +1,31 @@
-EXECUTABLE := render
-LDFLAGS=-L/usr/local/depot/cuda-10.2/lib64/ -lcudart
-CU_FILES   := main.cu
-CU_DEPS    :=camera.h hitable_list.h hitable.h ray.h material.h sphere.h vec3.h
-LOGS	   := logs
+NVCC           = nvcc -ccbin /usr/bin/gcc -std=c++11
+# NVCC           = nvcc -ccbin /usr/bin/gcc -std=c++11 -g -G
 
-all: $(EXECUTABLE)
+NVCCFLAGS      = -O3 -m64 --gpu-architecture compute_61
 
-###########################################################
+SRCS = main.cu
+INCS = vec3.h ray.h hitable.h hitable_list.h sphere.h camera.h material.h
 
-ARCH=$(shell uname | sed -e 's/-.*//g')
-OBJDIR=objs
-CXX=g++ -m64
-CXXFLAGS=-O3 -Wall -g
-HOSTNAME=$(shell hostname)
+cudart: cudart.o
+	$(NVCC) $(NVCCFLAGS) -o cudart cudart.o
 
-LIBS       :=
-FRAMEWORKS :=
+cudart.o: $(SRCS) $(INCS)
+	$(NVCC) $(NVCCFLAGS) -o cudart.o -c main.cu
 
-NVCCFLAGS=-O3 -m64 --gpu-architecture compute_61 -ccbin /usr/bin/gcc
-LIBS += GL glut cudart
+out.ppm: cudart
+	rm -f out.ppm
+	./cudart > out.ppm
 
-LDLIBS  := $(addprefix -l, $(LIBS))
-LDFRAMEWORKS := $(addprefix -framework , $(FRAMEWORKS))
+out.jpg: out.ppm
+	rm -f out.jpg
+	ppmtojpeg out.ppm > out.jpg
 
-NVCC=nvcc
+profile_basic: cudart
+	nvprof ./cudart > out.ppm
 
-OBJS=$(OBJDIR)/main.o
-
-
-.PHONY: dirs clean
-
-default: $(EXECUTABLE)
-
-dirs:
-		mkdir -p $(OBJDIR)/
+# use nvprof --query-metrics
+profile_metrics: cudart
+	nvprof --metrics achieved_occupancy,inst_executed,inst_fp_32,inst_fp_64,inst_integer ./cudart > out.ppm
 
 clean:
-		rm -rf $(OBJDIR) *~ $(EXECUTABLE) $(LOGS) *.ppm
-
-export: $(EXFILES)
-	cp -p $(EXFILES) $(STARTER)
-
-
-$(EXECUTABLE): dirs $(OBJS)
-		$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
-
-
-$(OBJDIR)/%.o: %.cpp
-		$(CXX) $< $(CXXFLAGS) -c -o $@
-
-$(OBJDIR)/%.o: %.cu
-		$(NVCC) $< $(NVCCFLAGS) -c -o $@
+	rm -f cudart cudart.o out.ppm out.jpg

@@ -44,7 +44,7 @@ __device__ vec3 color(const ray& r, hitable **world, curandState *local_rand_sta
         }
         else {
             vec3 unit_direction = unit_vector(cur_ray.direction());
-            float t = 0.5f*(unit_direction.y() + 1.0f);
+            double t = 0.5f*(unit_direction.y() + 1.0f);
             vec3 c = (1.0f-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
             return cur_attenuation * c;
         }
@@ -78,13 +78,13 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam, hit
     curandState local_rand_state = rand_state[pixel_index];
     vec3 col(0,0,0);
     for(int s=0; s < ns; s++) {
-        float u = float(i + curand_uniform(&local_rand_state)) / float(max_x);
-        float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
+        double u = double(i + curand_uniform(&local_rand_state)) / double(max_x);
+        double v = double(j + curand_uniform(&local_rand_state)) / double(max_y);
         ray r = (*cam)->get_ray(u, v, &local_rand_state);
         col += color(r, world, &local_rand_state);
     }
     rand_state[pixel_index] = local_rand_state;
-    col /= float(ns);
+    col /= double(ns);
     col[0] = sqrt(col[0]);
     col[1] = sqrt(col[1]);
     col[2] = sqrt(col[2]);
@@ -101,7 +101,7 @@ __global__ void create_world(hitable **d_list, hitable **d_world, camera **d_cam
         int i = 1;
         for(int a = -11; a < 11; a++) {
             for(int b = -11; b < 11; b++) {
-                float choose_mat = RND;
+                double choose_mat = RND;
                 vec3 center(a+RND,0.2,b+RND);
                 if(choose_mat < 0.8f) {
                     d_list[i++] = new sphere(center, 0.2,
@@ -124,13 +124,13 @@ __global__ void create_world(hitable **d_list, hitable **d_world, camera **d_cam
 
         vec3 lookfrom(13,2,3);
         vec3 lookat(0,0,0);
-        float dist_to_focus = 10.0; (lookfrom-lookat).length();
-        float aperture = 0.1;
+        double dist_to_focus = 10.0; (lookfrom-lookat).length();
+        double aperture = 0.1;
         *d_camera   = new camera(lookfrom,
                                  lookat,
                                  vec3(0,1,0),
                                  30.0,
-                                 float(nx)/float(ny),
+                                 double(nx)/double(ny),
                                  aperture,
                                  dist_to_focus);
     }
@@ -145,7 +145,7 @@ __global__ void create_world_dense(hitable **d_list, hitable **d_world, camera *
         for(int a = -11; a < 11; a++) {
             for(int b = -11; b < 11; b++) {
                 for (int c = 0; c < 3; c++) {
-                    float choose_mat = RND;
+                    double choose_mat = RND;
                     vec3 center(a,c,b);
                     if(choose_mat < 0.5f) {
                         d_list[i++] = new sphere(center, 0.2,
@@ -166,13 +166,13 @@ __global__ void create_world_dense(hitable **d_list, hitable **d_world, camera *
 
         vec3 lookfrom(15,4,15);
         vec3 lookat(-11,0,-11);
-        float dist_to_focus = 10.0; (lookfrom-lookat).length();
-        float aperture = 0.1;
+        double dist_to_focus = 10.0; (lookfrom-lookat).length();
+        double aperture = 0.1;
         *d_camera   = new camera(lookfrom,
                                  lookat,
                                  vec3(0,1,0),
                                  30.0,
-                                 float(nx)/float(ny),
+                                 double(nx)/double(ny),
                                  aperture,
                                  dist_to_focus);
     }
@@ -186,7 +186,7 @@ __global__ void create_world_sparse(hitable **d_list, hitable **d_world, camera 
         int i = 1;
         for(int a = -5; a < 5; a++) {
             for(int b = -5; b < 5; b++) {
-                float choose_mat = RND;
+                double choose_mat = RND;
                 vec3 center(a*2+RND,RND*10,b*2+RND);
                 if(choose_mat < 0.8f) {
                     d_list[i++] = new sphere(center, 0.5,
@@ -209,13 +209,13 @@ __global__ void create_world_sparse(hitable **d_list, hitable **d_world, camera 
 
         vec3 lookfrom(10,2,10); // (X, Z, Y)
         vec3 lookat(0,2,0);
-        float dist_to_focus = 10.0; (lookfrom-lookat).length();
-        float aperture = 0.1;
+        double dist_to_focus = 10.0; (lookfrom-lookat).length();
+        double aperture = 0.1;
         *d_camera   = new camera(lookfrom,
                                  lookat,
                                  vec3(0,1,0),
                                  30.0,
-                                 float(nx)/float(ny),
+                                 double(nx)/double(ny),
                                  aperture,
                                  dist_to_focus);
     }
@@ -260,15 +260,17 @@ int main() {
 
     // make our world of hitables & the camera
     hitable **d_list;
-    int num_hitables = 10*10+1;
-    // int num_hitables = 22*22*3+1+3;
+    // int num_hitables = 10*10+1;     // sparse
+    // int num_hitables = 22*22+1+3; // basic
+    int num_hitables = 22*22*3+1+3; // dense
     checkCudaErrors(cudaMalloc((void **)&d_list, num_hitables*sizeof(hitable *)));
     hitable **d_world;
     checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(hitable *)));
     camera **d_camera;
     checkCudaErrors(cudaMalloc((void **)&d_camera, sizeof(camera *)));
-    create_world_sparse<<<1,1>>>(d_list, d_world, d_camera, nx, ny, d_rand_state2);
-    // create_world_dense<<<1,1>>>(d_list, d_world, d_camera, nx, ny, d_rand_state2);
+    // create_world<<<1,1>>>(d_list, d_world, d_camera, nx, ny, d_rand_state2);
+    // create_world_sparse<<<1,1>>>(d_list, d_world, d_camera, nx, ny, d_rand_state2);
+    create_world_dense<<<1,1>>>(d_list, d_world, d_camera, nx, ny, d_rand_state2);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
 

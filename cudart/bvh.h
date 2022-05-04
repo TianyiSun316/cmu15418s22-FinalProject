@@ -100,10 +100,10 @@ __device__ bvh_node::bvh_node(hitable** objects, int start, int end, int axis) {
             // printf("%d, %d, axis=%d\n", start, end, axis);
             // sortobj(objects, start, end, axis);
             int mid = start + object_span / 2;
-            left = new bvh_node(objects, start, mid, axis == 0 ? 2 : 0);
-            right = new bvh_node(objects, mid, end, axis == 0 ? 2 : 0);
-            // left = new bvh_node(objects, start, mid, (axis+1) % 3);
-            // right = new bvh_node(objects, mid, end, (axis+1) % 3);
+            // left = new bvh_node(objects, start, mid, axis == 0 ? 2 : 0);
+            // right = new bvh_node(objects, mid, end, axis == 0 ? 2 : 0);
+            left = new bvh_node(objects, start, mid, (axis+1) % 3);
+            right = new bvh_node(objects, mid, end, (axis+1) % 3);
         }
     }
     aabb box_left, box_right;

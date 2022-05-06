@@ -1,6 +1,9 @@
+# Presentation Video
+https://drive.google.com/file/d/1f5Ro3GWk_dcy1DaiIg2fLZNUFoMxV7mA/view?usp=sharing
+# Final Report
+https://github.com/TianyiSun316/cmu15418s22-FinalProject/blob/main/Parallel_Final_Project.pdf
+
 # Project Proposal
-
-
 
 ## SUMMARY
 We are going to implement ray tracing algorithm of both sequential and parallel version on GPU using CUDA. We will make use of GPU computing units to accelerate the process as quick as possible. We will also conduct detailed performance profiling for our implementation considering characteristics including memory bandwidth, shared memory usage and cache behavior. Besides, a comparision with the sequential implementation will also be made.
